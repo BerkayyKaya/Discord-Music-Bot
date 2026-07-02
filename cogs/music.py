@@ -104,6 +104,29 @@ class Music(commands.Cog):
         except Exception as e:
             print(f"\n[Error] Oynatma sırasında hata: {e}")
             await ctx.send("Şarkı açılırken bir hata oluştu!")
+    
+    @commands.command(name = "pause", aliases = ["dur", "stop", "durdur", "duraklat", "bekle"])
+    async def pause(self, ctx):
+        if ctx.voice_client and ctx.voice_client.is_playing():
+            ctx.voice_client.pause()
+            await ctx.send("Müzik durduruldu!")
+
+    @commands.command(name = "resume", aliases = ["devam", "başla", "go", "devam-et"])
+    async def resume(self, ctx):
+        if ctx.voice_client and ctx.voice_client.is_paused():
+            ctx.voice_client.resume()
+            await ctx.send("Müzik devam ediyor!")
+
+    @commands.command(name = "leave", aliases = ["git", "çık", "cık", "ayrıl", "ayril"])
+    async def leave(self, ctx):
+        if ctx.guild.id in self.queues:
+            self.queues[ctx.guild.id].clear()
+        
+        if ctx.voice_client.is_playing() or ctx.voice_client.is_paused():
+            ctx.voice_client.stop()
+            
+        await ctx.voice_client.disconnect()
+        await ctx.send("Kanaldan ayrılıyorum!")
 
 
 async def setup(bot):
