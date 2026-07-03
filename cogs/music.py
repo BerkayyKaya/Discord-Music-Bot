@@ -110,7 +110,7 @@ class Music(commands.Cog):
             print(f"\n[Error] Oynatma sırasında hata: {e}")
             await ctx.send("Şarkı açılırken bir hata oluştu!")
 
-    @commands.command(name = "playlist", aliases = ["çalmalistesi", "calmalistesi", "pl", "liste", "listeekle", "mix"])
+    @commands.command(name = "playlist", aliases = ["çalmalistesi", "calmalistesi", "pl", "listeekle", "mix"])
     async def playlist(self, ctx, *, link):
         if not ctx.author.voice:
             return await ctx.send("Önce bir ses kanalına girmelisin ki ben de gelebileyim.")
@@ -211,6 +211,33 @@ class Music(commands.Cog):
             
         await ctx.voice_client.disconnect()
         await ctx.send("Kanaldan ayrılıyorum!")
+
+    @commands.command(name = "liste", aliases = ["list", "kuyruk", "şarkılar", "queue", "q"])
+    async def list(self, ctx):
+        if ctx.guild.id not in self.queues or len(self.queues[ctx.guild.id]) == 0:
+            return await ctx.send("Şu an kuyruk bomboş, şarkı eklemek için `play` kullanabilirsin.")
+
+        message = "**Gelecek Şarkıların Listesi:**\n"
+        for i, song in enumerate(self.queues[ctx.guild.id], start = 1):
+            message += f"{i}. **{song["title"]}**\n"
+
+            if i == 10:
+                if not len(self.queues[ctx.guild.id] - 10) < 0:
+                    message += f"... ve {len(self.queues[ctx.guild.id] - 10)} şarkı daha sırada bekliyor..."
+
+                message += f"... ve {10 - len(self.queues[ctx.guild.id])} şarkı daha sırada bekliyor..."
+                break
+        
+        await ctx.send(message)
+
+    @commands.command(name = "skip", aliases = ["sonraki", "sıradaki", "geç", "gec", "siradaki", "atla"])
+    async def skip(self, ctx):
+        if ctx.voice_client and (ctx.voice_client.is_playing() or ctx.voice_client.is_paused()):
+            ctx.voice_client.stop()
+            await ctx.send("Şarkıyı geçiyorum, sıradaki şarkıya bakılıyor...", delete_after = 5)
+        else:
+            await ctx.send("Şarkılar bitti!")
+
     
     #endregion
 
