@@ -39,6 +39,7 @@ class Music(commands.Cog):
         song_url = song_data["url"]
         title = song_data["title"]
         thumbnail = song_data.get("thumbnail", None) # thumbnail varsa çek yoksa None ata
+        requester = song_data.get("requester", "Bilinmeyen Kullanıcı")
 
         player = discord.FFmpegPCMAudio(song_url, **ffmpeg_options)
 
@@ -54,7 +55,7 @@ class Music(commands.Cog):
             description = f"**{title}**",
             color = discord.Color.from_rgb(155, 89, 182)
         )
-        embed.add_field(name = "İsteyen", value = ctx.author.mention, inline = True)
+        embed.add_field(name = "İsteyen", value = requester, inline = True)
 
         if thumbnail:
             embed.set_thumbnail(url = thumbnail)
@@ -87,7 +88,8 @@ class Music(commands.Cog):
             song_data = {
                 "url" : data["url"],
                 "title" : data.get("title", "Bilinmeyen Şarkı"),
-                "thumbnail" : data.get("thumbnail", None)
+                "thumbnail" : data.get("thumbnail", None),
+                "requester" : ctx.author.mention
             }
 
             # eğer o sunucu için bir liste yoksa listeyi başlat
