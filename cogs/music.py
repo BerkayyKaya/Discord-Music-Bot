@@ -5,6 +5,7 @@ import asyncio
 import random
 import yt_dlp
 import warnings
+from utils.views import MusicPlayerView
 warnings.filterwarnings("ignore")
 
 """
@@ -53,9 +54,11 @@ class Music(commands.Cog):
         
         ctx.voice_client.play(player, after = after_playing)
 
+        fixed_title = "🎵 Şimdi Çalıyor 🎵" + ("\u2800" * 40)
+        song_title = title if len(title) <= 45 else title[:45] + "..."
         embed = discord.Embed(
-            title = "🎵 Şimdi Çalıyor 🎵",
-            description = f"**{title}**",
+            title = fixed_title,
+            description = f"**{song_title}**",
             color = discord.Color.from_rgb(155, 89, 182)
         )
         embed.add_field(name = "İsteyen", value = requester, inline = True)
@@ -63,7 +66,10 @@ class Music(commands.Cog):
         if thumbnail:
             embed.set_thumbnail(url = thumbnail)
         
-        await ctx.send(embed = embed)
+        # self = music cog
+        view = MusicPlayerView(self)
+        
+        await ctx.send(embed = embed, view = view)
 
     @commands.command(name = "play", aliases = ["çal", "oynat", "şarkı", "cal"])
     async def play(self, ctx, *, link):
