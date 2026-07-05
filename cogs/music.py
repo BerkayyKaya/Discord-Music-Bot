@@ -29,6 +29,8 @@ class Music(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
         self.queues = {}
+        # now playing messages
+        self.np_messages = {}
 
     #region play commands
     async def play_next(self, ctx):
@@ -69,7 +71,19 @@ class Music(commands.Cog):
         # self = music cog
         view = MusicPlayerView(self)
         
-        await ctx.send(embed = embed, view = view)
+        if ctx.guild.id in self.np_messages:
+            try:
+                await self.np_messages[ctx.guild.id].delete()
+            except discord.NotFound as e:
+                print(f"\n[Error] Bot eski mesajını silmeye çalışırken bir hata oluştu, hata: {e}\n "
+                      "Kullanıcı bu mesajı kendi eliyle silmiş olabilir!")
+            except Exception as e:
+                print("\n[Error] Bot eski mesajını silmeye çalışırken bilinmeyen bir hata oluştu!\n "
+                      f"Hata: {e}")
+        
+        new_message = await ctx.send(embed = embed, view = view)
+        self.np_messages[ctx.guild.id] = new_message
+        
 
     @commands.command(name = "play", aliases = ["çal", "oynat", "şarkı", "cal"])
     async def play(self, ctx, *, link):
