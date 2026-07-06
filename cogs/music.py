@@ -56,8 +56,8 @@ class Music(commands.Cog):
         
         ctx.voice_client.play(player, after = after_playing)
 
-        fixed_title = "🎵 Şimdi Çalıyor 🎵" + ("\u2800" * 40)
-        song_title = title if len(title) <= 45 else title[:45] + "..."
+        fixed_title = ("\u2800" * 12) + "🎵 Şimdi Çalıyor 🎵" + ("\u2800" * 12)
+        song_title = title if len(title) <= 55 else title[:55] + "..."
         embed = discord.Embed(
             title = fixed_title,
             description = f"**{song_title}**",
@@ -83,7 +83,6 @@ class Music(commands.Cog):
         
         new_message = await ctx.send(embed = embed, view = view)
         self.np_messages[ctx.guild.id] = new_message
-        
 
     @commands.command(name = "play", aliases = ["çal", "oynat", "şarkı", "cal"])
     async def play(self, ctx, *, link):
@@ -228,6 +227,13 @@ class Music(commands.Cog):
         
         if ctx.voice_client.is_playing() or ctx.voice_client.is_paused():
             ctx.voice_client.stop()
+        
+        if ctx.guild.id in self.np_messages:
+            try:
+                await self.np_messages[ctx.guild.id].delete()
+                del self.np_messages[ctx.guild.id]
+            except:
+                pass
             
         await ctx.voice_client.disconnect()
         await ctx.send("Kanaldan ayrılıyorum!")
