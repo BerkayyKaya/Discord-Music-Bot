@@ -69,7 +69,7 @@ class Music(commands.Cog):
             embed.set_thumbnail(url = thumbnail)
         
         # self = music cog
-        view = MusicPlayerView(self)
+        view = MusicPlayerView(self, original_embed = embed)
         
         if ctx.guild.id in self.np_messages:
             try:
