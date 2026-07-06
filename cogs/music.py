@@ -245,13 +245,10 @@ class Music(commands.Cog):
 
         message = "**Gelecek Şarkıların Listesi:**\n"
         for i, song in enumerate(self.queues[ctx.guild.id], start = 1):
-            message += f"{i}. **{song["title"]}**\n"
+            message += f"{i}. **{song['title']}**\n"
 
-            if i == 10:
-                if not len(self.queues[ctx.guild.id] - 10) < 0:
-                    message += f"... ve {len(self.queues[ctx.guild.id] - 10)} şarkı daha sırada bekliyor..."
-
-                message += f"... ve {10 - len(self.queues[ctx.guild.id])} şarkı daha sırada bekliyor..."
+            if i == 10 and not len(self.queues[ctx.guild.id]) < 11:
+                message += f"... ve {len(self.queues[ctx.guild.id]) - 10} şarkı daha sırada bekliyor..."
                 break
         
         await ctx.send(message)
