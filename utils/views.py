@@ -34,7 +34,7 @@ class MusicPlayerView(discord.ui.View):
         voice_client.stop()
         await interaction.response.send_message("Şarkı geçildi!", ephemeral = True)
     
-    @discord.ui.button(label = "📜Listeyi Göster", style = discord.ButtonStyle.red)
+    @discord.ui.button(label = "📜Listeyi Göster", style = discord.ButtonStyle.green)
     async def list_button(self, interaction : discord.Interaction, button : discord.ui.button):
         self.showing_queue = not self.showing_queue
         guild_id = interaction.guild.id
@@ -71,3 +71,23 @@ class MusicPlayerView(discord.ui.View):
             button.label = "📜Listeyi Göster"
 
             await interaction.response.edit_message(embed = self.original_embed, view = self)
+
+    @discord.ui.button(label = "🗑️Sıfırla ve Çık", style = discord.ButtonStyle.blurple)
+    async def clear_button(self, interaction : discord.Interaction, button : discord.ui.Button):
+        guild_id = interaction.guild.id
+        
+        self.cog.queues[guild_id].clear()
+
+        voice_client = interaction.guild.voice_client
+        if voice_client.is_playing() or voice_client.is_paused():
+            voice_client.stop()
+        
+        if interaction.guild.id in self.cog.np_messages:
+            try:
+                await self.cog.np_messages[guild_id].delete()
+                del self.cog.np_messages[guild_id]
+            except:
+                pass
+        
+        await interaction.response.send_message("Sırıflama başarılı, kanaldan ayrılıyorum!", ephemeral = True)
+        await voice_client.disconnect()
