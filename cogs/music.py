@@ -64,6 +64,11 @@ class Music(commands.Cog):
             color = discord.Color.from_rgb(155, 89, 182)
         )
         embed.add_field(name = "İsteyen", value = requester, inline = True)
+        
+        if len(self.queues[ctx.guild.id]) > 0:
+            next_title = self.queues[ctx.guild.id][0]["title"]
+            next_song_title = next_title if len(next_title) <= 45 else next_title[:45] + "..."
+            embed.add_field(name = "Sonraki Şarkı:", value = next_song_title)
 
         if thumbnail:
             embed.set_thumbnail(url = thumbnail)
