@@ -90,7 +90,7 @@ Botun varsayılan ön eki `.` olarak ayarlanmıştır. Komutları ve işlevlerin
 
 | Komut | Kullanım | Açıklama |
 | :--- | :--- | :--- |
-| **`.play`** | `.play <youtube-linki>` | Belirtilen tekil YouTube videosunu/şarkısını kuyruğa ekler ve oynatır. |
+| **`.play`** | `.play <youtube-linki veya şarkı sözleri>` | Belirtilen tekil YouTube videosunu/şarkısını kuyruğa ekler ve oynatır. |
 | **`.playlist`** | `.playlist <playlist-linki>` | YouTube oynatma listesindeki maksimum 25 şarkıyı rastgele olarak sıraya alır. |
 | **`.liste`** | `.liste` | Sıradaki şarkıların güncel listesini ve kuyruk sırasını gösterir. |
 | **`.shuffle`** | `.shuffle` | Aktif çalma listesini rastgele karıştırır. |
