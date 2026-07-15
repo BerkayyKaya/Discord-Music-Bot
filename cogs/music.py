@@ -129,7 +129,7 @@ class Music(commands.Cog):
             else:
                 # Eğer başka şarkı çalıyorsa sıraya eklesin
                 self.queues[ctx.guild.id].append(song_data)
-                await ctx.send(f"Şarkı sıraya eklendi: **{song_data['title']}** | Sıradaki yeri: {len(self.queues[ctx.guild.id])}")
+                await ctx.send(f"Şarkı sıraya eklendi: **{song_data['title']}** | Sıradaki yeri: {len(self.queues[ctx.guild.id])}", delete_after = 5)
         except Exception as e:
             print(f"\n[Error] Oynatma sırasında hata: {e}")
             await ctx.send("Şarkı açılırken bir hata oluştu!")
@@ -283,6 +283,15 @@ class Music(commands.Cog):
             await ctx.send("Şarkılar bitti, temizlenecek bir şey yok.")
     
     #endregion
+
+    async def cog_after_invoke(self, ctx):
+        if ctx.message:
+            try:
+                await ctx.message.delete()
+            except discord.Forbidden:
+                print(f"\n[ERROR] {ctx.guild.name} sunucusunda komut mesajı silinemedi.")
+            except discord.NotFound:
+                print(f"\n[ERROR] Bot kullanıcının mesajını bulamadı, kullanıcı çoktan silmiş olabilir.")
 
 
 async def setup(bot):
