@@ -1,11 +1,14 @@
-import discord
-from discord.ext import commands
-from utils.ytdl import ffmpeg_options, ytdl
 import asyncio
 import random
-import yt_dlp
 import warnings
+
+import discord
+import yt_dlp
+from discord.ext import commands
+
 from utils.views import MusicPlayerView
+from utils.ytdl import ffmpeg_options, ytdl
+
 warnings.filterwarnings("ignore")
 
 """
@@ -32,13 +35,69 @@ class Music(commands.Cog):
         # now playing messages
         self.np_messages = {}
 
+        # OTOMATİK OYNATMA İÇİN HAFIZA
+        self.autoplay = {}      # özellik aktif mi?
+        self.history = {}       # aynı şarkıları çalmamak için
+        self.current_song = {}  # o an çalan şarkının bilgisini tutar
+
     #region play commands
     async def play_next(self, ctx):
+
+        # Bot ses kanalında mı?
+        if not ctx.voice_client or not ctx.voice_client.is_connected():
+            return
+
         # ilgili sunucunun kuyruğunda şarkı var mı?
         if ctx.guild.id in self.queues and len(self.queues[ctx.guild.id]) > 0:
             next_song = self.queues[ctx.guild.id].pop(0) # ilgili sunucunun kuyruğundaki sıradaki şarkıyı çıkart ve çal
             await self.play_music(ctx, next_song)
+        elif self.autoplay.get(ctx.guild.id, False) and ctx.guild.id in self.current_song and ctx.voice_client:
+            last_song = self.current_song[ctx.guild.id]
+            last_id = last_song.get("id", None)
+
+            if last_id:
+                await ctx.send("Oynatma listesi bitti, **Otomatik Oynatma** devrede! Benzer şarkılar aranıyor...", delete_after = 5)
+
+                radio_url = f"https://www.youtube.com/watch?v={last_id}&list=RD{last_id}" # youtubenin oluşturduğu mixin url adresi
+
+                fast_autoplay_options = {
+                    "format": "bestaudio/best",
+                    "noplaylist": False,        # listeye izin ver ki mixi kullanabilelim
+                    "playlist_items": "2",    # listedeki ilk şarkı zaten az önceki çalandı
+                    "quiet": True,
+                    "ignoreerrors": True,
+                    "default_search": "auto"
+                }
+                ytdl_auto = yt_dlp.YoutubeDL(fast_autoplay_options)
+
+
+                try:
+                    loop = self.bot.loop
+                    data = await loop.run_in_executor(None, lambda: ytdl_auto.extract_info(radio_url, download = False))
+
+                    if "entries" in data:
+                        for entry in data["entries"]:
+                            if entry is None: continue
+
+                            if entry['id'] not in self.history.get(ctx.guild.id, []):
+                                song_data = {
+                                    'url': entry['url'],
+                                    'title': entry.get('title', 'Bilinmeyen Şarkı'),
+                                    'thumbnail': entry.get('thumbnail', None),
+                                    'requester': 'Youtube',
+                                    'id': entry['id']
+                                }
+                                
+                                await self.play_music(ctx, song_data)
+                                return
+                except Exception as e:
+                    print(f"Otomatik oynatma hatası: {e}")
         else:
+            try:
+                await self.np_messages[ctx.guild.id].delete()
+                del self.np_messages[ctx.guild.id]
+            except:  # noqa: E722, S110
+                pass
             await ctx.send("Kuyruktaki tüm şarkılar bitti, liste boş!", delete_after = 5) # bir uyarı mesajı gönder ve 5 saniye sonra sil
     
     async def play_music(self, ctx, song_data):
@@ -46,6 +105,16 @@ class Music(commands.Cog):
         title = song_data["title"]
         thumbnail = song_data.get("thumbnail", None) # thumbnail varsa çek yoksa None ata
         requester = song_data.get("requester", "Bilinmeyen Kullanıcı")
+        self.current_song[ctx.guild.id] = song_data
+
+        if ctx.guild.id not in self.history:
+            self.history[ctx.guild.id] = []
+        
+        self.history[ctx.guild.id].append(song_data['id'])
+
+        # 20 şarkıdan fazlasını tutma
+        if len(self.history[ctx.guild.id]) > 20:
+            self.history[ctx.guild.id].pop(0)
 
         player = discord.FFmpegPCMAudio(song_url, **ffmpeg_options)
 
@@ -74,7 +143,7 @@ class Music(commands.Cog):
             embed.set_thumbnail(url = thumbnail)
         
         # self = music cog
-        view = MusicPlayerView(self, original_embed = embed)
+        view = MusicPlayerView(self, original_embed = embed, autoplay_state = self.autoplay.get(ctx.guild.id, False))
         
         if ctx.guild.id in self.np_messages:
             try:
@@ -93,7 +162,7 @@ class Music(commands.Cog):
     async def play(self, ctx, *, link):
         # komutu kullanan kişi bir ses kanalında değilse
         if not ctx.author.voice:
-            return await ctx.send("Önce bir ses kanalına gir ki ben de gelebileyim!")
+            return await ctx.send("Önce bir ses kanalına gir ki ben de gelebileyim!", delete_after = 5)
         
         voice_client = ctx.voice_client
         if not voice_client:
@@ -101,7 +170,7 @@ class Music(commands.Cog):
                 voice_client = await ctx.author.voice.channel.connect()
             except Exception as e:
                 print(f"\n[Error] Kanala bağlanmaya çalışırken hata oluştu: {e}")
-                return await ctx.send("Ses kanalına bağlanırken bir hata oluştu!")
+                return await ctx.send("Ses kanalına bağlanırken bir hata oluştu!", delete_after = 5)
         
         try:
             await ctx.send("Şarkı aranıyor...", delete_after = 5)
@@ -116,7 +185,8 @@ class Music(commands.Cog):
                 "url" : data["url"],
                 "title" : data.get("title", "Bilinmeyen Şarkı"),
                 "thumbnail" : data.get("thumbnail", None),
-                "requester" : ctx.author.mention
+                "requester" : ctx.author.mention,
+                "id" : data["id"]
             }
 
             # eğer o sunucu için bir liste yoksa listeyi başlat
@@ -132,12 +202,12 @@ class Music(commands.Cog):
                 await ctx.send(f"Şarkı sıraya eklendi: **{song_data['title']}** | Sıradaki yeri: {len(self.queues[ctx.guild.id])}", delete_after = 5)
         except Exception as e:
             print(f"\n[Error] Oynatma sırasında hata: {e}")
-            await ctx.send("Şarkı açılırken bir hata oluştu!")
+            await ctx.send("Şarkı açılırken bir hata oluştu!", delete_after = 5)
 
     @commands.command(name = "playlist", aliases = ["çalmalistesi", "calmalistesi", "pl", "listeekle", "mix"])
     async def playlist(self, ctx, *, link):
         if not ctx.author.voice:
-            return await ctx.send("Önce bir ses kanalına girmelisin ki ben de gelebileyim.")
+            return await ctx.send("Önce bir ses kanalına girmelisin ki ben de gelebileyim.", delete_after = 10)
 
         voice_client = ctx.voice_client
         if not voice_client:
@@ -145,7 +215,7 @@ class Music(commands.Cog):
                 voice_client = await ctx.author.voice.channel.connect()
             except Exception as e:
                 print(f"\n[Error] Ses kanalına bağlanırken hata oluştu: {e}")
-                await ctx.send("Ses kanalına bağlanırken hata oluştu!")
+                await ctx.send("Ses kanalına bağlanırken hata oluştu!", delete_after = 5)
         
         flat_playlist_options = {
             "extract_flat" : True,
@@ -161,12 +231,12 @@ class Music(commands.Cog):
             data = await loop.run_in_executor(None, lambda: ytdl_pl.extract_info(link, download = False))
             
             if "entries" not in data:
-                return await ctx.send("Bu linkte bir playlist bulunamadı, doğru link olduğundan emin misiniz?")
+                return await ctx.send("Bu linkte bir playlist bulunamadı, doğru link olduğundan emin misiniz?", delete_after = 5)
             
             all_songs = [entry for entry in data["entries"] if entry is not None]
 
             if not all_songs:
-                return await ctx.send("Playlist boş veya videolar gizli!")
+                return await ctx.send("Playlist boş veya videolar gizli!", delete_after = 5)
             
             chosen_songs = random.sample(all_songs, min(25, len(all_songs)))
 
@@ -200,7 +270,7 @@ class Music(commands.Cog):
                     print(f"\n[Error] Şarkı eklenirken bir hata oluştu: {e}")
                 
             playlist_name = data.get("title", "Bilinmeyen Playlist")
-            await ctx.send(f"🎧 **{playlist_name}** listesinden rastgele seçilen **{added_song_count}** şarkı başarıyla sıraya eklendi!")
+            await ctx.send(f"🎧 **{playlist_name}** listesinden rastgele seçilen **{added_song_count}** şarkı başarıyla sıraya eklendi!", delete_after = 5)
 
             if not voice_client.is_playing() and not voice_client.is_paused():
                 if ctx.guild.id in self.queues and len(self.queues[ctx.guild.id]) > 0:
@@ -208,7 +278,7 @@ class Music(commands.Cog):
                     await self.play_music(ctx, next_song)
         except Exception as e:
             print(f"\n[Error] Playlist oynatma hatası: {e}")
-            await ctx.send("Playlist açılırken bir hata oluştu. Linkin geçerli bir YouTube playlisti olduğundan emin ol!")
+            await ctx.send("Playlist açılırken bir hata oluştu. Linkin geçerli bir YouTube playlisti olduğundan emin ol!", delete_after = 5)
     
     #endregion
 
@@ -232,6 +302,9 @@ class Music(commands.Cog):
         
         if ctx.voice_client.is_playing() or ctx.voice_client.is_paused():
             ctx.voice_client.stop()
+
+        if ctx.guild.id in self.cog.current_song:
+            del self.cog.current_song[ctx.guild.id]
         
         if ctx.guild.id in self.np_messages:
             try:
@@ -291,7 +364,7 @@ class Music(commands.Cog):
             except discord.Forbidden:
                 print(f"\n[ERROR] {ctx.guild.name} sunucusunda komut mesajı silinemedi.")
             except discord.NotFound:
-                print(f"\n[ERROR] Bot kullanıcının mesajını bulamadı, kullanıcı çoktan silmiş olabilir.")
+                print("\n[ERROR] Bot kullanıcının mesajını bulamadı, kullanıcı çoktan silmiş olabilir.")
 
 
 async def setup(bot):

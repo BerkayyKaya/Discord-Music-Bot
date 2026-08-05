@@ -3,12 +3,29 @@ import discord
 
 
 class MusicPlayerView(discord.ui.View):
-    def __init__(self, cog, original_embed):
+    def __init__(self, cog, original_embed, autoplay_state = False):
         super().__init__(timeout = None)
         self.cog = cog
         self.showing_queue = False
         self.original_embed = original_embed
-    
+        self.autoplay_state = autoplay_state
+        self.check_methods()
+
+
+    # View nesnesini kontrol etme fonksiyonu
+    def check_methods(self):
+        for child in self.children:
+            if isinstance(child, discord.ui.Button) and child.label and "OTO-LOOP" in child.label:
+                if self.autoplay_state:
+                    child.label = "♾️ OTO-LOOP: AÇIK"
+                    child.style = discord.ButtonStyle.green
+                else:
+                    child.label = "♾️ OTO-LOOP: KAPALI"
+                    child.style = discord.ButtonStyle.gray
+                break
+
+
+    # region row 0
     @discord.ui.button(label = "⏸️Durdur/▶️Devam", style = discord.ButtonStyle.blurple)
     async def pause_resume_button(self, interaction : discord.Interaction, button : discord.ui.Button):
         voice_client = interaction.guild.voice_client
@@ -50,8 +67,8 @@ class MusicPlayerView(discord.ui.View):
             # listede şarkı varsa
             queue_message = ""
             for i, song in enumerate(queues[interaction.guild.id], 1):
-                title = song["title"] if len(song["title"]) <= 45 else song["title"][:45] + "..."
-                queue_message += f"{i}. **{title}** | **İsteyen:** {song['requester']}\n"
+                title = song["title"] if (len(song["title"]) <= 40) else (song["title"][:40] + "...")
+                queue_message += f"{i}. **{title.upper()}**  |  **İsteyen:** {song['requester']}\n"
 
                 if i == 10 and len(queues[interaction.guild.id]) > 10:
                     queue_message += f"ve {len(queues[interaction.guild.id]) - 10} şarkı daha sırada bekliyor..."
@@ -78,16 +95,47 @@ class MusicPlayerView(discord.ui.View):
         
         self.cog.queues[guild_id].clear()
 
+        if guild_id in self.cog.current_song:
+            del self.cog.current_song[guild_id]
+
         voice_client = interaction.guild.voice_client
         if voice_client.is_playing() or voice_client.is_paused():
             voice_client.stop()
-        
+
+        await voice_client.disconnect()
+        await interaction.response.send_message("Sırıflama başarılı, kanaldan ayrılıyorum!", ephemeral = True)
+                    
         if interaction.guild.id in self.cog.np_messages:
             try:
                 await self.cog.np_messages[guild_id].delete()
                 del self.cog.np_messages[guild_id]
             except:
                 pass
+    
+
+    # endregion
+
+    # region row 1
+    @discord.ui.button(label = "♾️ OTO-LOOP: KAPALI", style=discord.ButtonStyle.gray, row = 1)
+    async def autoplay_button(self, interaction: discord.Interaction, button: discord.ui.Button):
+        guild_id = interaction.guild.id
         
-        await interaction.response.send_message("Sırıflama başarılı, kanaldan ayrılıyorum!", ephemeral = True)
-        await voice_client.disconnect()
+        # Durumu tersine çevir
+        current_state = self.cog.autoplay.get(guild_id, False)
+        new_state = not current_state
+        self.cog.autoplay[guild_id] = new_state
+        
+        # Butonun görünümünü güncelle
+        if new_state:
+            button.label = "♾️ OTO-LOOP: AÇIK"
+            button.style = discord.ButtonStyle.green
+            await interaction.response.edit_message(view = self)
+            await interaction.followup.send("♾️ Otomatik oynatma **açıldı**. Şarkılar bitince benzerleri çalınacak.", ephemeral=True)
+        else:
+            button.label = "♾️ OTO-LOOP: KAPALI"
+            button.style = discord.ButtonStyle.gray
+            await interaction.response.edit_message(view = self)
+            await interaction.followup.send("♾️ Otomatik oynatma **kapatıldı**.", ephemeral=True)
+
+
+    # endregion

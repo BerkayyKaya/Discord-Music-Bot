@@ -1,7 +1,10 @@
 import asyncio
-from dotenv import load_dotenv
 import os
+
+from dotenv import load_dotenv
+
 from core.bot import MusicBot
+
 
 async def main():
     bot = MusicBot()
