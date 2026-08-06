@@ -1,0 +1,9 @@
+version: '3.8'
+
+services:
+  musicbot:
+    build: .
+    container_name: music_bot
+    restart: unless-stopped # çökme durumunda otomatik yeniden başlat
+    env_file:
+      - .env
