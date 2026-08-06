@@ -60,36 +60,45 @@ class Music(commands.Cog):
 
                 radio_url = f"https://www.youtube.com/watch?v={last_id}&list=RD{last_id}" # youtubenin oluşturduğu mixin url adresi
 
-                fast_autoplay_options = {
-                    "format": "bestaudio/best",
-                    "noplaylist": False,        # listeye izin ver ki mixi kullanabilelim
-                    "playlist_items": "2",    # listedeki ilk şarkı zaten az önceki çalandı
+                flat_options = {
+                    "extract_flat": True,       # Şarkıların seslerini çözme yalnızca isimlerine bak
+                    "playlist_items": "2-10",   # 10 şarkıya kadar bakabiliriz flat çıkarımda sorun olmayacaktır
                     "quiet": True,
-                    "ignoreerrors": True,
-                    "default_search": "auto"
+                    "ignoreerrors": True
                 }
-                ytdl_auto = yt_dlp.YoutubeDL(fast_autoplay_options)
+                ytdl_flat = yt_dlp.YoutubeDL(flat_options)
 
 
                 try:
                     loop = self.bot.loop
-                    data = await loop.run_in_executor(None, lambda: ytdl_auto.extract_info(radio_url, download = False))
+                    data = await loop.run_in_executor(None, lambda: ytdl_flat.extract_info(radio_url, download = False))
+
+                    new_song_id = None
 
                     if "entries" in data:
                         for entry in data["entries"]:
                             if entry is None: continue
 
                             if entry['id'] not in self.history.get(ctx.guild.id, []):
-                                song_data = {
-                                    'url': entry['url'],
-                                    'title': entry.get('title', 'Bilinmeyen Şarkı'),
-                                    'thumbnail': entry.get('thumbnail', None),
-                                    'requester': 'Youtube',
-                                    'id': entry['id']
-                                }
-                                
-                                await self.play_music(ctx, song_data)
-                                return
+
+                                new_song_id = entry['id']
+
+                                break
+
+                    if new_song_id:
+                        song_url = f"https://www.youtube.com/watch?v={new_song_id}"
+                        song_info = await loop.run_in_executor(None, lambda: ytdl.extract_info(song_url, download=False))
+
+                        song_data = {
+                            'url': song_info['url'],
+                            'title': song_info.get('title', 'Bilinmeyen Şarkı'),
+                            'thumbnail': song_info.get('thumbnail', None),
+                            'requester': "YouTube",
+                            'id': song_info['id']
+                        }
+                        await self.play_music(ctx, song_data)
+                    else:
+                        await ctx.send("Uygun bir şarkı bulunamadı!", delete_after = 5)
                 except Exception as e:
                     print(f"Otomatik oynatma hatası: {e}")
         else:
@@ -132,7 +141,7 @@ class Music(commands.Cog):
             description = f"**{song_title}**",
             color = discord.Color.from_rgb(155, 89, 182)
         )
-        embed.add_field(name = "İsteyen", value = requester, inline = True)
+        embed.add_field(name = "İsteyen:", value = requester, inline = True)
         
         if len(self.queues[ctx.guild.id]) > 0:
             next_title = self.queues[ctx.guild.id][0]["title"]

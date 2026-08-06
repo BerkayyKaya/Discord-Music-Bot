@@ -20,7 +20,7 @@ class MusicPlayerView(discord.ui.View):
                     child.label = "♾️ OTO-LOOP: AÇIK"
                     child.style = discord.ButtonStyle.green
                 else:
-                    child.label = "♾️ OTO-LOOP: KAPALI"
+                    child.label = "♾️OTO-LOOP: KAPALI"
                     child.style = discord.ButtonStyle.gray
                 break
 
@@ -132,7 +132,7 @@ class MusicPlayerView(discord.ui.View):
             await interaction.response.edit_message(view = self)
             await interaction.followup.send("♾️ Otomatik oynatma **açıldı**. Şarkılar bitince benzerleri çalınacak.", ephemeral=True)
         else:
-            button.label = "♾️ OTO-LOOP: KAPALI"
+            button.label = "♾️OTO-LOOP: KAPALI"
             button.style = discord.ButtonStyle.gray
             await interaction.response.edit_message(view = self)
             await interaction.followup.send("♾️ Otomatik oynatma **kapatıldı**.", ephemeral=True)
