@@ -1,27 +1,30 @@
 # 🎵 Discord Sunucunuz İçin YouTube Müzik Botu 🎵
 ![Python](https://img.shields.io/badge/Python-3.12%2B-blue)
 ![discord.py](https://img.shields.io/badge/discord.py-2.7.1-%235865F2)
-![FFmpeg](https://img.shields.io/badge/FFmpeg-2024--08--21-green)
+![FFmpeg](https://img.shields.io/badge/FFmpeg-2024--08--21%2B-green)
 ![yt-dlp](https://img.shields.io/badge/yt--dlp-2026.6.9-blue)
 
 Modern, interaktif UI butonlarına sahip ve YouTube üzerinden yüksek kaliteli ses akışı sağlayan gelişmiş bir Discord müzik botu.
 
-Bu bot, sunucunuzdaki ses kanallarında mesaj kalabalığı yaratmadan, dinamik arayüzü sayesinde youtube linklerinde müzik deneyimini en kolay hale getirmek için tasarlanmıştır.
+Bu bot, sunucunuzdaki ses kanallarında mesaj kalabalığı yaratmadan, dinamik arayüzü sayesinde youtube linklerinde müzik deneyimini en kolay hale getirmek için tasarlanmıştır. Ayrıca bot Oto Play özelliği sayesinde YouTube'nin gelişmiş öneri algoritmasını kullanarak devamlı olarak şarkı çalabilmektedir.
 
 ### Müzik Botunun UI Görünümleri
 ![](images/bot_ui_1.png)
 ![](images/bot_ui_2.png)
 
+### Oto Play Durumunda UI Görünümü
+![](images/bot_ui_3.png)
 ---
 
 ## Özellikler
 
-*   **YouTube Desteği:** `.play <youtube-linki>` komutu ile doğrudan YouTube üzerinden şarkı oynatma.
+*   **YouTube Desteği:** `.play <youtube-linki veya şarkı sözleri>` komutu ile doğrudan YouTube üzerinden şarkı oynatma.
 *   **Playlist Desteği** `.playlist <playlist-linki>` komutu ile YouTube playlisti üzerinden toplu şarkı oynatma.
 *   **İnteraktif UI Kontrolleri:** Şarkı oynatılırken kanaldaki interaktif butonlar sayesinde:
     *   ⏸️/▶️ Şarkıyı duraklatma ve devam ettirme.
-    *   📋 Sıradaki şarkıların listesini dinamik olarak gösterme/gizleme (Gelişmiş Kuyruk Görünümü).
+    *   📋 Sıradaki şarkıların listesini dinamik olarak gösterme/gizleme.
     *   ⏹️ Kuyruğu tamamen sıfırlayıp botun kanaldan ayrılmasını sağlayan hızlı kapatma butonu.
+    *   ♾️ Oto Play özelliğini kontrol etmenizi sağlayan interaktif buton.
 *   **"Sırada Ne Var?" Önizlemesi:** Liste butonuna basmanıza gerek kalmadan, bir sonraki şarkının başlığını doğrudan ana arayüz üzerinde görebilme kolaylığı.
 *   **Temiz Sohbet Modu (Anti-Spam):** Bot, şarkı geçişlerinde veya kanaldan ayrıldığında eski mesajlarını ve artık işlevsiz kalan butonları otomatik olarak temizler. Sohbet akışını bozmaz, etkileşimi hep en altta tutar.
 
@@ -29,8 +32,43 @@ Bu bot, sunucunuzdaki ses kanallarında mesaj kalabalığı yaratmadan, dinamik 
 
 ## 🛠️ Kurulum ve Çalıştırma 🛠️
 
-Botu kendi sunucunuzda çalıştırmak için aşağıdaki adımları takip edin:
+* Hızlı bir başlangıç yapmak veya botunuzu sunucuya kurmak için [Kurulum Adımları](#hızlı-başlangıç-i̇çin)
 
+* Botu lokal bilgisayarınızda çalıştırmak için [Kurulum Adımları](#lokal-çalıştırma-i̇çin)
+
+
+## Hızlı Başlangıç İçin
+### 1. Projeyi Klonlayın
+```bash
+git clone https://github.com/BerkayyKaya/Discord-Music-Bot
+```
+
+Proje dizinine geçin:
+```bash
+cd Discord-Music-Bot
+```
+
+### 2. Example Dosyasını Düzenleyin
+Proje dizini içerisinde size bir .env.example dosyası verilmiştir. Bu dosyayı bir text editörü ile açarak **discord_token** değerini kendi botunuzun tokeni olarak ayarlayın.
+
+Nasıl token alacağınızı bilmiyorsanız: [Token Nasıl Alınır?](#4-bir-bot-oluşturun)
+
+### 3. Docker Containeri Başlatın
+Projenin kök dizini içerisindeyken docker-compose.yml dosyasını aktifleştirin.
+
+#### Windows Kullanıyorsanız:
+```bash
+docker-compose up -d --build
+```
+
+#### Linux Kullanıyorsanız:
+```bash
+docker compose up -d --build
+```
+
+**Not: Aktifleştirme işlemi internet hızınıza bağlı olarak 3-5 dakika sürebilir. Bu işlem bir defaya mahsustur.**
+
+## Lokal Çalıştırma İçin
 ### 1. Gereksinimler
 Sisteminizde **Python 3.12+** ve ses işleme için **FFmpeg** kurulu olmalıdır. Ayrıca FFmpeg Pathinizin sistem değişkenlerinde olduğundan emin olunuz.
 
