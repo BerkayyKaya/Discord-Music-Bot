@@ -269,7 +269,8 @@ class Music(commands.Cog):
                         "url" : song_info["url"],
                         "title" : song_info.get("title", "Bilinmeyen Şarkı"),
                         "thumbnail" : song_info.get("thumbnail", None),
-                        "requester" : ctx.author.mention
+                        "requester" : ctx.author.mention,
+                        "id" : song_info["id"]
                     }
 
                     self.queues[ctx.guild.id].append(song_data)
