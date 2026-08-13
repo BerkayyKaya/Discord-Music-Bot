@@ -307,14 +307,17 @@ class Music(commands.Cog):
 
     @commands.command(name = "leave", aliases = ["git", "çık", "cık", "ayrıl", "ayril"])
     async def leave(self, ctx):
+        if not ctx.voice_client:
+            return await ctx.send("Zaten herhangi bir ses kanalında değilim!", delete_after = 5)
+
         if ctx.guild.id in self.queues:
             self.queues[ctx.guild.id].clear()
         
         if ctx.voice_client.is_playing() or ctx.voice_client.is_paused():
             ctx.voice_client.stop()
 
-        if ctx.guild.id in self.cog.current_song:
-            del self.cog.current_song[ctx.guild.id]
+        if ctx.guild.id in self.current_song:
+            del self.current_song[ctx.guild.id]
         
         if ctx.guild.id in self.np_messages:
             try:
@@ -324,7 +327,7 @@ class Music(commands.Cog):
                 pass
             
         await ctx.voice_client.disconnect()
-        await ctx.send("Kanaldan ayrılıyorum!")
+        await ctx.send("Kanaldan ayrılıyorum!", delete_after = 5)
 
     @commands.command(name = "liste", aliases = ["list", "kuyruk", "şarkılar", "queue", "q"])
     async def list(self, ctx):
