@@ -1,6 +1,8 @@
 import os
+
 import discord
 from discord.ext import commands
+
 
 class MusicBot(commands.Bot):
     def __init__(self):

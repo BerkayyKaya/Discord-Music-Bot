@@ -297,13 +297,13 @@ class Music(commands.Cog):
     async def pause(self, ctx):
         if ctx.voice_client and ctx.voice_client.is_playing():
             ctx.voice_client.pause()
-            await ctx.send("Müzik durduruldu!")
+            await ctx.send("Müzik durduruldu!", delete_after = 5)
 
     @commands.command(name = "resume", aliases = ["devam", "başla", "go", "devam-et"])
     async def resume(self, ctx):
         if ctx.voice_client and ctx.voice_client.is_paused():
             ctx.voice_client.resume()
-            await ctx.send("Müzik devam ediyor!")
+            await ctx.send("Müzik devam ediyor!", delete_after = 5)
 
     @commands.command(name = "leave", aliases = ["git", "çık", "cık", "ayrıl", "ayril"])
     async def leave(self, ctx):
@@ -332,7 +332,7 @@ class Music(commands.Cog):
     @commands.command(name = "liste", aliases = ["list", "kuyruk", "şarkılar", "queue", "q"])
     async def list(self, ctx):
         if ctx.guild.id not in self.queues or len(self.queues[ctx.guild.id]) == 0:
-            return await ctx.send("Şu an kuyruk bomboş, şarkı eklemek için `play` komutunu kullanabilirsin.")
+            return await ctx.send("Şu an kuyruk bomboş, şarkı eklemek için `play` komutunu kullanabilirsin.", delete_after = 5)
 
         message = "**Gelecek Şarkıların Listesi:**\n"
         for i, song in enumerate(self.queues[ctx.guild.id], start = 1):
@@ -350,23 +350,23 @@ class Music(commands.Cog):
             ctx.voice_client.stop()
             await ctx.send("Şarkıyı geçiyorum, sıradaki şarkıya bakılıyor...", delete_after = 5)
         else:
-            await ctx.send("Şarkılar bitti!")
+            await ctx.send("Şarkılar bitti!", delete_after = 5)
 
     @commands.command(name = "shuffle", aliases = ["karıştır", "karistir"])
     async def shuffle(self, ctx):
         if ctx.guild.id not in self.queues or len(self.queues[ctx.guild.id]) <= 1:
-            return await ctx.send("Kuyrukta karıştırmaya yetecek kadar şarkı yok, minimum 2 şarkı olmalıdır!")
+            return await ctx.send("Kuyrukta karıştırmaya yetecek kadar şarkı yok, minimum 2 şarkı olmalıdır!", delete_after = 5)
         
         random.shuffle(self.queues[ctx.guild.id])
-        await ctx.send("🎲 Kuyruk karıştırıldı!")
+        await ctx.send("🎲 Kuyruk karıştırıldı!", delete_after = 5)
 
     @commands.command(name = "clear", aliases = ["sıfırla", "temizle"])
     async def clear(self, ctx):
         if ctx.guild.id in self.queues and self.queues[ctx.guild.id]:
             self.queues[ctx.guild.id].clear()
-            await ctx.send("Kuyruk temizlendi!")
+            await ctx.send("Kuyruk temizlendi!", delete_after = 5)
         else:
-            await ctx.send("Şarkılar bitti, temizlenecek bir şey yok.")
+            await ctx.send("Şarkılar bitti, temizlenecek bir şey yok.", delete_after = 5)
     
     #endregion
 
