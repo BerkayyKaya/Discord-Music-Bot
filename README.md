@@ -49,7 +49,7 @@ cd Discord-Music-Bot
 ```
 
 ### 2. Example Dosyasını Düzenleyin
-Proje dizini içerisinde size bir .env.example dosyası verilmiştir. Bu dosyayı bir text editörü ile açarak **discord_token** değerini kendi botunuzun tokeni olarak ayarlayın.
+Proje dizini içerisinde size bir **.env.example** dosyası verilmiştir. Bu dosyayı bir text editörü ile açarak **discord_token** değerini kendi botunuzun tokeni olarak ayarlayın. Ayrıca **.env.example** dosyasının uzantısını **.env** olarak değiştirin.
 
 Nasıl token alacağınızı bilmiyorsanız: [Token Nasıl Alınır?](#4-bir-bot-oluşturun)
 
