@@ -1,8 +1,13 @@
+<div align="center">
+
 # 🎵 Discord Sunucunuz İçin YouTube Müzik Botu 🎵
 ![Python](https://img.shields.io/badge/Python-3.12%2B-blue)
 ![discord.py](https://img.shields.io/badge/discord.py-2.7.1-%235865F2)
 ![FFmpeg](https://img.shields.io/badge/FFmpeg-2024--08--21%2B-green)
 ![yt-dlp](https://img.shields.io/badge/yt--dlp-2026.6.9-blue)
+
+</div>
+<br>
 
 Modern, interaktif UI butonlarına sahip ve YouTube üzerinden yüksek kaliteli ses akışı sağlayan gelişmiş bir Discord müzik botu.
 
