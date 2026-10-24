@@ -9,9 +9,9 @@
 </div>
 <br>
 
-Modern, interaktif UI butonlarına sahip ve YouTube üzerinden yüksek kaliteli ses akışı sağlayan gelişmiş bir Discord müzik botu.
+Modern, interaktif UI butonlarına sahip; **YouTube** ve **SoundCloud** üzerinden kesintisiz ve yüksek kaliteli ses akışı sağlayan açık kaynaklı bir Discord müzik botu.
 
-Bu bot, sunucunuzdaki ses kanallarında mesaj kalabalığı yaratmadan, dinamik arayüzü sayesinde youtube linklerinde müzik deneyimini en kolay hale getirmek için tasarlanmıştır. Ayrıca bot Oto Play özelliği sayesinde YouTube'nin gelişmiş öneri algoritmasını kullanarak devamlı olarak şarkı çalabilmektedir.
+Bu bot, sunucunuzdaki ses kanallarında mesaj kalabalığı yaratmadan dinamik arayüzü sayesinde müzik deneyimini en kolay hale getirmek için tasarlanmıştır. Yenilenen **modüler sağlayıcı (provider) mimarisi** sayesinde hem YouTube hem de SoundCloud bağlantılarını otomatik olarak tanır. Ayrıca **Oto Play** özelliği ile kuyruk boşaldığında dinlediğiniz platformun öneri algoritmasını kullanarak kesintisiz müzik çalmaya devam eder.
 
 ### Müzik Botunun UI Görünümleri
 ![](images/bot_ui_1.png)
@@ -19,27 +19,31 @@ Bu bot, sunucunuzdaki ses kanallarında mesaj kalabalığı yaratmadan, dinamik 
 
 ### Oto Play Durumunda UI Görünümü
 ![](images/bot_ui_3.png)
+![](images/bot_ui_4.png)
 ---
 
-## Özellikler
+## ✨ Özellikler
 
-*   **YouTube Desteği:** `.play <youtube-linki veya şarkı sözleri>` komutu ile doğrudan YouTube üzerinden şarkı oynatma.
-*   **Playlist Desteği** `.playlist <playlist-linki>` komutu ile YouTube playlisti üzerinden toplu şarkı oynatma.
-*   **İnteraktif UI Kontrolleri:** Şarkı oynatılırken kanaldaki interaktif butonlar sayesinde:
+-   **Çoklu Platform Desteği (YouTube & SoundCloud):** `.play <link veya arama terimi>` komutu ile ister YouTube ister SoundCloud üzerinden doğrudan şarkı arayın ve oynatın.
+-   **Genişletilebilir Provider Mimarisi:** Botun müzik motoru tek bir platforma bağımlı kalmayacak şekilde soyutlanmıştır. Gelecekte yeni müzik sağlayıcıları sisteme kolayca entegre edilebilir.
+-   **Akıllı Oto Play (Auto-Play):** Çalma listesi sona erdiğinde eğer özellik etkinleştirilmişse çalınan son parçanın kaynağından (YouTube veya SoundCloud) öneri algoritması kullanılarak benzer parçaları otomatik olarak çalar.
+-   **Playlist Desteği:** `.playlist <playlist-linki>` komutu ile YouTube veya SoundCloud çalma listelerindeki şarkıları toplu olarak kuyruğa dahil edin.
+-   **İnteraktif UI Kontrolleri:** Şarkı oynatılırken kanaldaki interaktif butonlar sayesinde:
     *   ⏸️/▶️ Şarkıyı duraklatma ve devam ettirme.
     *   📋 Sıradaki şarkıların listesini dinamik olarak gösterme/gizleme.
     *   ⏹️ Kuyruğu tamamen sıfırlayıp botun kanaldan ayrılmasını sağlayan hızlı kapatma butonu.
-    *   ♾️ Oto Play özelliğini kontrol etmenizi sağlayan interaktif buton.
-*   **"Sırada Ne Var?" Önizlemesi:** Liste butonuna basmanıza gerek kalmadan, bir sonraki şarkının başlığını doğrudan ana arayüz üzerinde görebilme kolaylığı.
-*   **Temiz Sohbet Modu (Anti-Spam):** Bot, şarkı geçişlerinde veya kanaldan ayrıldığında eski mesajlarını ve artık işlevsiz kalan butonları otomatik olarak temizler. Sohbet akışını bozmaz, etkileşimi hep en altta tutar.
+    *   ♾️ Oto Play özelliğini aktif/pasif hale getiren kontrol butonu.
+-   **"Sırada Ne Var?" Önizlemesi:** Liste butonuna basmanıza gerek kalmadan, bir sonraki şarkının başlığını doğrudan ana arayüz üzerinden görebilme kolaylığı.
+<br><b>Not: Auto-Play özelliği açıkken sonraki şarkının başlığı görünmeyebilir.</b>
+-   **Temiz Sohbet Modu (Anti-Spam):** Bot, şarkı geçişlerinde veya kanaldan ayrıldığında eski mesajlarını ve artık işlevsiz kalan butonları otomatik olarak temizler. Sohbet akışını bozmaz, etkileşimi hep en altta tutar.
 
 ---
 
 ## 🛠️ Kurulum ve Çalıştırma 🛠️
 
-* Hızlı bir başlangıç yapmak veya botunuzu sunucuya kurmak için [Kurulum Adımları](#hızlı-başlangıç-i̇çin)
+* Hızlı bir başlangıç yapmak veya botunuzu sunucuya kurmak için hızlıca [Kurulum Adımlarına](#hızlı-başlangıç-i̇çin) gidebilirsiniz.
 
-* Botu lokal bilgisayarınızda çalıştırmak için [Kurulum Adımları](#lokal-çalıştırma-i̇çin)
+* Botu docker kullanmadan lokal bilgisayarınızda çalıştırmak için hızlıca [Kurulum Adımlarına](#lokal-çalıştırma-i̇çin) gidebilirsiniz.
 
 
 ## Hızlı Başlangıç İçin
@@ -73,7 +77,7 @@ docker compose up -d --build
 
 **Not: Aktifleştirme işlemi internet hızınıza bağlı olarak 3-5 dakika sürebilir. Bu işlem bir defaya mahsustur.**
 
-## Lokal Çalıştırma İçin
+## Docker Kullanmadan Lokal Çalıştırma İçin
 ### 1. Gereksinimler
 Sisteminizde **Python 3.12+** ve ses işleme için **FFmpeg** kurulu olmalıdır. Ayrıca FFmpeg Pathinizin sistem değişkenlerinde olduğundan emin olunuz.
 
@@ -133,8 +137,8 @@ Botun varsayılan ön eki `.` olarak ayarlanmıştır. Komutları ve işlevlerin
 
 | Komut | Kullanım | Açıklama |
 | :--- | :--- | :--- |
-| **`.play`** | `.play <youtube-linki veya şarkı sözleri>` | Belirtilen tekil YouTube videosunu/şarkısını kuyruğa ekler ve oynatır. |
-| **`.playlist`** | `.playlist <playlist-linki>` | YouTube oynatma listesindeki maksimum 25 şarkıyı rastgele olarak sıraya alır. |
+| **`.play`** | `.play <şarkı linki veya şarkı sözleri>` | Belirtilen tekil YouTube videosunu/şarkısını kuyruğa ekler ve oynatır. |
+| **`.playlist`** | `.playlist <playlist linki>` | YouTube oynatma listesindeki maksimum 25 şarkıyı rastgele olarak sıraya alır. |
 | **`.liste`** | `.liste` | Sıradaki şarkıların güncel listesini ve kuyruk sırasını gösterir. |
 | **`.shuffle`** | `.shuffle` | Aktif çalma listesini rastgele karıştırır. |
 | **`.skip`** | `.skip` | O an çalan aktif müziği durdurur ve sıradakine geçer. |
