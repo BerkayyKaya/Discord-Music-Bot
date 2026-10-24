@@ -129,6 +129,6 @@ class YouTubeProvider(BaseProvider):
 
         if new_song_id:
             song_url = f"https://www.youtube.com/watch?v={new_song_id}"
-            return await self.extract_track(song_url, requester="YouTube Radyo", loop=loop)
+            return await self.extract_track(song_url, requester="YouTube", loop=loop)
 
         return None
