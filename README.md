@@ -24,10 +24,10 @@ Bu bot, sunucunuzdaki ses kanallarında mesaj kalabalığı yaratmadan dinamik a
 
 ## ✨ Özellikler
 
--   **Çoklu Platform Desteği (YouTube & SoundCloud):** `.play <link veya arama terimi>` komutu ile ister YouTube ister SoundCloud üzerinden doğrudan şarkı arayın ve oynatın.
+-   **Çoklu Platform Desteği (YouTube & SoundCloud):** `/play <link veya arama terimi>` komutu ile ister YouTube ister SoundCloud üzerinden doğrudan şarkı arayın ve oynatın.
 -   **Genişletilebilir Provider Mimarisi:** Botun müzik motoru tek bir platforma bağımlı kalmayacak şekilde soyutlanmıştır. Gelecekte yeni müzik sağlayıcıları sisteme kolayca entegre edilebilir.
 -   **Akıllı Oto Play (Auto-Play):** Çalma listesi sona erdiğinde eğer özellik etkinleştirilmişse çalınan son parçanın kaynağından (YouTube veya SoundCloud) öneri algoritması kullanılarak benzer parçaları otomatik olarak çalar.
--   **Playlist Desteği:** `.playlist <playlist-linki>` komutu ile YouTube veya SoundCloud çalma listelerindeki şarkıları toplu olarak kuyruğa dahil edin.
+-   **Playlist Desteği:** `/playlist <playlist-linki>` komutu ile YouTube veya SoundCloud çalma listelerindeki şarkıları toplu olarak kuyruğa dahil edin.
 -   **İnteraktif UI Kontrolleri:** Şarkı oynatılırken kanaldaki interaktif butonlar sayesinde:
     *   ⏸️/▶️ Şarkıyı duraklatma ve devam ettirme.
     *   📋 Sıradaki şarkıların listesini dinamik olarak gösterme/gizleme.
@@ -133,19 +133,22 @@ python main.py
 
 ## Komutlar ve Kullanım
 
-Botun varsayılan ön eki `.` olarak ayarlanmıştır. Komutları ve işlevlerini aşağıdaki tabloda bulabilirsiniz:
+Botun tüm komutları **slash komutu** (`/`) olarak çalışır. Sohbete `/` yazdığınızda Discord, kullanabileceğiniz komutları ve açıklamalarını otomatik olarak listeler. Komutların tamamını ve işlevlerini görmek için `/yardim` komutunu da kullanabilirsiniz.
 
 | Komut | Kullanım | Açıklama |
 | :--- | :--- | :--- |
-| **`.play`** | `.play <şarkı linki veya şarkı sözleri>` | Belirtilen tekil YouTube videosunu/şarkısını kuyruğa ekler ve oynatır. |
-| **`.playlist`** | `.playlist <playlist linki>` | YouTube oynatma listesindeki maksimum 25 şarkıyı rastgele olarak sıraya alır. |
-| **`.liste`** | `.liste` | Sıradaki şarkıların güncel listesini ve kuyruk sırasını gösterir. |
-| **`.shuffle`** | `.shuffle` | Aktif çalma listesini rastgele karıştırır. |
-| **`.skip`** | `.skip` | O an çalan aktif müziği durdurur ve sıradakine geçer. |
-| **`.pause`**  | `.pause`| Botun çaldığı aktif sesi durdurur. |
-| **`.resume`** | `.resume` | Durdurulan sesi devam ettirir. |
-| **`.clear`** | `.clear` | Aktif çalma listesini temizler. |
-| **`.leave`** | `.leave` | Botu ses kanalından çıkarır, kuyruğu temizler ve aktif UI mesajını siler. |
+| **`/play`** | `/play <şarkı linki veya şarkı adı>` | Belirtilen tekil YouTube videosunu/şarkısını kuyruğa ekler ve oynatır. |
+| **`/playlist`** | `/playlist <playlist linki>` | YouTube oynatma listesindeki maksimum 25 şarkıyı sıraya alır. |
+| **`/liste`** | `/liste` | Sıradaki şarkıların güncel listesini ve kuyruk sırasını gösterir. |
+| **`/shuffle`** | `/shuffle` | Aktif çalma listesini rastgele karıştırır. |
+| **`/skip`** | `/skip` | O an çalan aktif müziği durdurur ve sıradakine geçer. |
+| **`/pause`** | `/pause` | Botun çaldığı aktif sesi durdurur. |
+| **`/resume`** | `/resume` | Durdurulan sesi devam ettirir. |
+| **`/clear`** | `/clear` | Aktif çalma listesini temizler. |
+| **`/leave`** | `/leave` | Botu ses kanalından çıkarır, kuyruğu temizler ve aktif UI mesajını siler. |
+| **`/yardim`** | `/yardim` | Kullanılabilir tüm komutları ve işlevlerini gösterir. |
+
+> 💡 **Slash komutları ne zaman görünür?** Bot açılırken komutlar Discord'a otomatik kaydedilir. Global kayıt işlemi bir saate kadar sürebilir. Komutların anında görünmesini istiyorsanız `.env` dosyanıza `guild_id = <sunucu_id>` satırını ekleyin; bot komutları sadece o sunucuya anında kaydeder. Ayrıca botun sunucuya `applications.commands` izniyle davet edilmiş olması gerekir.
 
 
 > 💡 **Önemli Not:** Şarkı çalmaya başladıktan sonra sürekli komut yazmanıza gerek yoktur; durdurma, oynatma, listeyi açma/kapama ve kanaldan çıkarma işlemlerini doğrudan mesajın altındaki **İnteraktif UI Butonlarını** kullanarak çok daha hızlı yapabilirsiniz.
