@@ -2,10 +2,12 @@ import asyncio
 import warnings
 
 import discord
+from discord import app_commands
 from discord.ext import commands
 
 from utils.audio.manager import SourceManager
 from utils.audio.models import Playlist
+from utils.context import InteractionContext
 from utils.views import MusicPlayerView
 from utils.ytdl import ffmpeg_options
 
@@ -20,11 +22,10 @@ ctx.channel: Komutun yazıldığı metin kanalını verir.
 
 ctx.voice_client: Botun o sunucudaki ses bağlantısını kontrol eder.
 
-*: Bu discord.py'a özel çok kullanışlı bir özelliktir. Kullanıcı: 
-!play duman belkide alışman lazım derse, bot sadece ilk kelimeyi yani "duman" kelimesini link değişkenine atar, geri kalanını atlar. 
-Araya * koyduğumuzda ise bota şunu demiş oluruz: "Komuttan sonra yazılan her şeyi tek bir parça olarak al ve link değişkeninin içine koy."
+Slash komutlarında link gibi metin parametreleri tek bir seçenek olarak gelir.
+Kullanıcı /play duman belkide alışman lazım yazdığında, tüm metin link değişkenine aktarılır.
 
-link: Kullanıcının !play komutundan sonra yazdığı şeydir. link, arama, kelime, sarki vb. gibi...
+link: Kullanıcının /play komutundan sonra yazdığı şarkı adı veya bağlantıdır.
 """
 
 class Music(commands.Cog):
@@ -127,8 +128,13 @@ class Music(commands.Cog):
         new_message = await ctx.send(embed=embed, view=view)
         self.np_messages[ctx.guild.id] = new_message
 
-    @commands.command(name="play", aliases=["çal", "oynat", "şarkı", "cal"])
-    async def play(self, ctx, *, link):
+    @app_commands.command(name="play", description="Şarkı adı veya bağlantı ile müzik çalar ya da kuyruğa ekler.")
+    @app_commands.describe(link="Şarkı adı veya YouTube/SoundCloud bağlantısı")
+    @app_commands.guild_only()
+    async def play(self, interaction: discord.Interaction, link: str):
+        ctx = InteractionContext(interaction)
+        await ctx.defer()
+
         if not ctx.author.voice:
             return await ctx.send("Önce bir ses kanalına gir ki ben de gelebileyim!", delete_after=5)
 
@@ -160,8 +166,13 @@ class Music(commands.Cog):
             print(f"\n[Error] Oynatma sırasında hata: {e}")
             await ctx.send("Şarkı açılırken bir hata oluştu!", delete_after=5)
 
-    @commands.command(name="playlist", aliases=["çalmalistesi", "calmalistesi", "pl", "listeekle", "mix"])
-    async def playlist(self, ctx, *, link):
+    @app_commands.command(name="playlist", description="YouTube veya SoundCloud oynatma listesini kuyruğa ekler.")
+    @app_commands.describe(link="Oynatma listesi bağlantısı")
+    @app_commands.guild_only()
+    async def playlist(self, interaction: discord.Interaction, link: str):
+        ctx = InteractionContext(interaction)
+        await ctx.defer()
+
         if not ctx.author.voice:
             return await ctx.send("Önce bir ses kanalına girmelisin ki ben de gelebileyim.", delete_after=10)
 
@@ -198,20 +209,34 @@ class Music(commands.Cog):
             await ctx.send("Playlist açılırken bir hata oluştu!", delete_after=5)
 
     # region helper functions
-    @commands.command(name="pause", aliases=["dur", "stop", "durdur", "duraklat", "bekle"])
-    async def pause(self, ctx):
+    @app_commands.command(name="pause", description="Çalan müziği duraklatır.")
+    @app_commands.guild_only()
+    async def pause(self, interaction: discord.Interaction):
+        ctx = InteractionContext(interaction)
         if ctx.voice_client and ctx.voice_client.is_playing():
             ctx.voice_client.pause()
             await ctx.send("Müzik durduruldu!", delete_after=5)
+        elif ctx.voice_client and ctx.voice_client.is_paused():
+            await ctx.send("Müzik zaten duraklatılmış. Devam etmek için /resume kullan.", delete_after=5)
+        else:
+            await ctx.send("Şu an çalan bir şarkı yok.", delete_after=5)
 
-    @commands.command(name="resume", aliases=["devam", "başla", "go", "devam-et"])
-    async def resume(self, ctx):
+    @app_commands.command(name="resume", description="Duraklatılan müziği devam ettirir.")
+    @app_commands.guild_only()
+    async def resume(self, interaction: discord.Interaction):
+        ctx = InteractionContext(interaction)
         if ctx.voice_client and ctx.voice_client.is_paused():
             ctx.voice_client.resume()
             await ctx.send("Müzik devam ediyor!", delete_after=5)
+        elif ctx.voice_client and ctx.voice_client.is_playing():
+            await ctx.send("Müzik zaten çalıyor.", delete_after=5)
+        else:
+            await ctx.send("Şu an çalan bir şarkı yok.", delete_after=5)
 
-    @commands.command(name="leave", aliases=["git", "çık", "cık", "ayrıl", "ayril"])
-    async def leave(self, ctx):
+    @app_commands.command(name="leave", description="Botu ses kanalından çıkarır ve kuyruğu temizler.")
+    @app_commands.guild_only()
+    async def leave(self, interaction: discord.Interaction):
+        ctx = InteractionContext(interaction)
         if not ctx.voice_client:
             return await ctx.send("Zaten herhangi bir ses kanalında değilim!", delete_after=5)
 
@@ -234,10 +259,12 @@ class Music(commands.Cog):
         await ctx.voice_client.disconnect()
         await ctx.send("Kanaldan ayrılıyorum!", delete_after=5)
 
-    @commands.command(name="liste", aliases=["list", "kuyruk", "şarkılar", "queue", "q"])
-    async def list(self, ctx):
+    @app_commands.command(name="liste", description="Sıradaki şarkıların listesini gösterir.")
+    @app_commands.guild_only()
+    async def list(self, interaction: discord.Interaction):
+        ctx = InteractionContext(interaction)
         if ctx.guild.id not in self.queues or len(self.queues[ctx.guild.id]) == 0:
-            return await ctx.send("Şu an kuyruk bomboş, şarkı eklemek için `play` komutunu kullanabilirsin.", delete_after=5)
+            return await ctx.send("Şu an kuyruk bomboş, şarkı eklemek için `/play` komutunu kullanabilirsin.", delete_after=5)
 
         message = "**Gelecek Şarkıların Listesi:**\n"
         for i, song in enumerate(self.queues[ctx.guild.id], start=1):
@@ -249,16 +276,20 @@ class Music(commands.Cog):
 
         await ctx.send(message)
 
-    @commands.command(name="skip", aliases=["sonraki", "sıradaki", "geç", "gec", "siradaki", "atla"])
-    async def skip(self, ctx):
+    @app_commands.command(name="skip", description="Çalan şarkıyı atlayıp sıradaki şarkıya geçer.")
+    @app_commands.guild_only()
+    async def skip(self, interaction: discord.Interaction):
+        ctx = InteractionContext(interaction)
         if ctx.voice_client and (ctx.voice_client.is_playing() or ctx.voice_client.is_paused()):
             ctx.voice_client.stop()
             await ctx.send("Şarkıyı geçiyorum, sıradaki şarkıya bakılıyor...", delete_after=5)
         else:
             await ctx.send("Şarkılar bitti!", delete_after=5)
 
-    @commands.command(name="shuffle", aliases=["karıştır", "karistir"])
-    async def shuffle(self, ctx):
+    @app_commands.command(name="shuffle", description="Kuyruktaki şarkıları rastgele karıştırır.")
+    @app_commands.guild_only()
+    async def shuffle(self, interaction: discord.Interaction):
+        ctx = InteractionContext(interaction)
         import random
         if ctx.guild.id not in self.queues or len(self.queues[ctx.guild.id]) <= 1:
             return await ctx.send("Kuyrukta karıştırmaya yetecek kadar şarkı yok, minimum 2 şarkı olmalıdır!", delete_after=5)
@@ -266,8 +297,10 @@ class Music(commands.Cog):
         random.shuffle(self.queues[ctx.guild.id])
         await ctx.send("🎲 Kuyruk karıştırıldı!", delete_after=5)
 
-    @commands.command(name="clear", aliases=["sıfırla", "temizle"])
-    async def clear(self, ctx):
+    @app_commands.command(name="clear", description="Kuyruktaki tüm şarkıları temizler.")
+    @app_commands.guild_only()
+    async def clear(self, interaction: discord.Interaction):
+        ctx = InteractionContext(interaction)
         if ctx.guild.id in self.queues and self.queues[ctx.guild.id]:
             self.queues[ctx.guild.id].clear()
             await ctx.send("Kuyruk temizlendi!", delete_after=5)
@@ -275,15 +308,6 @@ class Music(commands.Cog):
             await ctx.send("Şarkılar bitti, temizlenecek bir şey yok.", delete_after=5)
 
     # endregion
-
-    async def cog_after_invoke(self, ctx):
-        if ctx.message:
-            try:
-                await ctx.message.delete()
-            except discord.Forbidden:
-                print(f"\n[ERROR] {ctx.guild.name} sunucusunda komut mesajı silinemedi.")
-            except discord.NotFound:
-                print("\n[ERROR] Bot kullanıcının mesajını bulamadı, kullanıcı çoktan silmiş olabilir.")
 
 
 async def setup(bot):
