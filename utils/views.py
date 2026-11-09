@@ -98,6 +98,8 @@ class MusicPlayerView(discord.ui.View):
         if guild_id in self.cog.current_song:
             del self.cog.current_song[guild_id]
 
+        self.cog.track_history.pop(guild_id, None)
+
         voice_client = interaction.guild.voice_client
         if voice_client.is_playing() or voice_client.is_paused():
             voice_client.stop()

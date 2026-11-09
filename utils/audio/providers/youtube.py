@@ -4,6 +4,13 @@ import re
 
 import yt_dlp
 
+from utils.audio.autoplay_filter import (
+    AutoplayFilter,
+    Candidate,
+    extract_artist,
+    is_same_song,
+    track_title,
+)
 from utils.audio.base import BaseProvider
 from utils.audio.models import Playlist, Track
 from utils.ytdl import ytdl
@@ -20,6 +27,7 @@ class YouTubeProvider(BaseProvider):
             "no_warnings": True,
             "ignoreerrors": True
         })
+        self.autoplay_filter = AutoplayFilter(max_consecutive_artist=2)
 
     def can_handle(self, query: str) -> bool:
         return bool(re.match(self.YT_REGEX, query)) or not query.startswith("http")
@@ -55,14 +63,21 @@ class YouTubeProvider(BaseProvider):
             stream_url = data.get("url")
 
         requester_str = requester.mention if hasattr(requester, "mention") else str(requester)
+        title = data.get("title", "Bilinmeyen Şarkı")
+        artist = extract_artist(
+            title,
+            uploader=data.get("channel") or data.get("uploader"),
+            artist=data.get("artist") or data.get("creator"),
+        )
 
         return Track(
             id=str(data["id"]),
-            title=data.get("title", "Bilinmeyen Şarkı"),
+            title=title,
             url=stream_url,
             webpage_url=data.get("webpage_url", f"https://www.youtube.com/watch?v={data['id']}"),
             thumbnail=data.get("thumbnail"),
             requester=requester_str,
+            artist=artist,
             provider=self.name
         )
 
@@ -91,13 +106,19 @@ class YouTubeProvider(BaseProvider):
                     if audio_formats:
                         stream_url = audio_formats[-1]["url"]
 
+                song_title = song_info.get("title", "Bilinmeyen Şarkı")
                 tracks.append(Track(
                     id=str(song_info["id"]),
-                    title=song_info.get("title", "Bilinmeyen Şarkı"),
+                    title=song_title,
                     url=stream_url,
                     webpage_url=song_info.get("webpage_url", video_url),
                     thumbnail=song_info.get("thumbnail"),
                     requester=requester_str,
+                    artist=extract_artist(
+                        song_title,
+                        uploader=song_info.get("channel") or song_info.get("uploader"),
+                        artist=song_info.get("artist") or song_info.get("creator"),
+                    ),
                     provider=self.name
                 ))
             except Exception:
@@ -106,29 +127,58 @@ class YouTubeProvider(BaseProvider):
         playlist_title = data.get("title", "YouTube Çalma Listesi")
         return Playlist(title=playlist_title, tracks=tracks)
 
-    async def get_autoplay_track(self, last_track: Track, history: list, loop) -> Track:
+    async def get_autoplay_track(
+        self,
+        last_track: Track,
+        history: list,
+        loop,
+        recent_tracks: list | None = None,
+    ) -> Track:
         """YouTube Mix (RD) radyosu üzerinden sıradaki şarkıyı bulur."""
         video_id = last_track["id"]
         radio_url = f"https://www.youtube.com/watch?v={video_id}&list=RD{video_id}"
-        
+
         flat_opts = {
             "extract_flat": True,
-            "playlist_items": "2-10",
+            "playlist_items": "2-20",
             "quiet": True,
             "ignoreerrors": True
         }
         ytdl_radio = yt_dlp.YoutubeDL(flat_opts)
         data = await loop.run_in_executor(None, lambda: ytdl_radio.extract_info(radio_url, download=False))
 
-        new_song_id = None
+        candidates = []
         if data and "entries" in data:
             for entry in data["entries"]:
-                if entry and str(entry["id"]) not in history:
-                    new_song_id = entry["id"]
-                    break
+                if not entry:
+                    continue
 
-        if new_song_id:
-            song_url = f"https://www.youtube.com/watch?v={new_song_id}"
-            return await self.extract_track(song_url, requester="YouTube", loop=loop)
+                entry_id = str(entry.get("id") or "")
+                if not entry_id or entry_id in history:
+                    continue
+
+                title = entry.get("title", "")
+                candidates.append(Candidate(
+                    id=entry_id,
+                    title=title,
+                    artist=extract_artist(
+                        title,
+                        uploader=entry.get("channel") or entry.get("uploader"),
+                        artist=entry.get("artist") or entry.get("creator"),
+                    ),
+                    payload=entry,
+                ))
+
+        for candidate in self.autoplay_filter.rank(candidates, last_track, recent_tracks or []):
+            song_url = f"https://www.youtube.com/watch?v={candidate.id}"
+            track = await self.extract_track(song_url, requester="YouTube", loop=loop)
+            if not track:
+                continue
+
+            # Flat listedeki başlık ile gerçek başlık farklı olabilir; son kontrol.
+            if is_same_song(track.title, track_title(last_track)):
+                continue
+
+            return track
 
         return None

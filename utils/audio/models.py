@@ -10,6 +10,7 @@ class Track:
     webpage_url: str       # Orijinal web bağlantısı
     thumbnail: str | None
     requester: str
+    artist: str | None = None
     provider: str = "youtube"
 
 
@@ -27,6 +28,7 @@ class Track:
             "webpage_url": self.webpage_url,
             "thumbnail": self.thumbnail,
             "requester": self.requester,
+            "artist": self.artist,
             "provider": self.provider
         }
 

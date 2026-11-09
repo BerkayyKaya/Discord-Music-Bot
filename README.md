@@ -27,6 +27,7 @@ Bu bot, sunucunuzdaki ses kanallarında mesaj kalabalığı yaratmadan dinamik a
 -   **Çoklu Platform Desteği (YouTube & SoundCloud):** `/play <link veya arama terimi>` komutu ile ister YouTube ister SoundCloud üzerinden doğrudan şarkı arayın ve oynatın.
 -   **Genişletilebilir Provider Mimarisi:** Botun müzik motoru tek bir platforma bağımlı kalmayacak şekilde soyutlanmıştır. Gelecekte yeni müzik sağlayıcıları sisteme kolayca entegre edilebilir.
 -   **Akıllı Oto Play (Auto-Play):** Çalma listesi sona erdiğinde eğer özellik etkinleştirilmişse çalınan son parçanın kaynağından (YouTube veya SoundCloud) öneri algoritması kullanılarak benzer parçaları otomatik olarak çalar.
+-   **Oto Play Filtresi:** Üst üste en fazla 2 şarkı aynı sanatçıdan çalınır; 3. tekrar engellenir. Ayrıca aynı şarkının remix, live, cover veya slowed gibi bir sürümü bir önceki şarkının hemen ardından çalınmaz.
 -   **Playlist Desteği:** `/playlist <playlist-linki>` komutu ile YouTube veya SoundCloud çalma listelerindeki şarkıları toplu olarak kuyruğa dahil edin.
 -   **İnteraktif UI Kontrolleri:** Şarkı oynatılırken kanaldaki interaktif butonlar sayesinde:
     *   ⏸️/▶️ Şarkıyı duraklatma ve devam ettirme.

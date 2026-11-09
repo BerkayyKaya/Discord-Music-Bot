@@ -3,6 +3,13 @@ import re
 
 import yt_dlp
 
+from utils.audio.autoplay_filter import (
+    AutoplayFilter,
+    Candidate,
+    extract_artist,
+    is_same_song,
+    track_title,
+)
 from utils.audio.base import BaseProvider
 from utils.audio.models import Playlist, Track
 
@@ -21,6 +28,7 @@ class SoundCloudProvider(BaseProvider):
         }
         self.sc_ytdl = yt_dlp.YoutubeDL(self.sc_opts)
         self.sc_flat = yt_dlp.YoutubeDL({"extract_flat": True, "quiet": True, "ignoreerrors": True})
+        self.autoplay_filter = AutoplayFilter(max_consecutive_artist=2)
 
     def can_handle(self, query: str) -> bool:
         return bool(re.match(self.SC_REGEX, query))
@@ -39,22 +47,6 @@ class SoundCloudProvider(BaseProvider):
             cleaned = re.sub(pattern, "", cleaned)
         return cleaned.strip()
 
-    def is_similar_song(self, original_title: str, new_title: str) -> bool:
-        """Aynı şarkının remix, cover veya slowed versiyonu mu kontrol eder."""
-        orig_words = set(re.findall(r"\w+", original_title.lower()))
-        new_words = set(re.findall(r"\w+", new_title.lower()))
-        # Gereksiz ortak kelimeleri yoksay
-        ignore_words = {"the", "a", "feat", "ft", "remix", "mix", "audio", "video", "official"}
-        orig_words -= ignore_words
-        new_words -= ignore_words
-        
-        if not orig_words:
-            return False
-
-        # Eğer yeni şarkının kelimelerinin %70'inden fazlası eski şarkıyla aynıysa, bu aynı şarkıdır!
-        intersection = orig_words.intersection(new_words)
-        return len(intersection) / len(orig_words) > 0.65
-
     async def extract_track(self, query: str, requester, loop) -> Track:
         search_query = query if query.startswith("http") else f"scsearch:{query}"
         data = await loop.run_in_executor(None, lambda: self.sc_ytdl.extract_info(search_query, download=False))
@@ -69,14 +61,21 @@ class SoundCloudProvider(BaseProvider):
             stream_url = data["formats"][-1].get("url")
 
         requester_str = requester.mention if hasattr(requester, "mention") else str(requester)
+        title = data.get("title", "Bilinmeyen SoundCloud Şarkısı")
+        artist = extract_artist(
+            title,
+            uploader=data.get("uploader") or data.get("channel"),
+            artist=data.get("artist") or data.get("creator"),
+        )
 
         return Track(
             id=str(data.get("id")),
-            title=data.get("title", "Bilinmeyen SoundCloud Şarkısı"),
+            title=title,
             url=stream_url,
             webpage_url=data.get("webpage_url", query),
             thumbnail=data.get("thumbnail"),
             requester=requester_str,
+            artist=artist,
             provider=self.name
         )
 
@@ -100,13 +99,19 @@ class SoundCloudProvider(BaseProvider):
                 if not stream_url and "formats" in info:
                     stream_url = info["formats"][-1].get("url")
 
+                song_title = info.get("title", "Bilinmeyen SoundCloud Şarkısı")
                 tracks.append(Track(
                     id=str(info.get("id")),
-                    title=info.get("title", "Bilinmeyen SoundCloud Şarkısı"),
+                    title=song_title,
                     url=stream_url,
                     webpage_url=info.get("webpage_url", track_url),
                     thumbnail=info.get("thumbnail"),
                     requester=requester_str,
+                    artist=extract_artist(
+                        song_title,
+                        uploader=info.get("uploader") or info.get("channel"),
+                        artist=info.get("artist") or info.get("creator"),
+                    ),
                     provider=self.name
                 ))
             except Exception:
@@ -115,7 +120,13 @@ class SoundCloudProvider(BaseProvider):
         playlist_title = data.get("title", "SoundCloud Çalma Listesi")
         return Playlist(title=playlist_title, tracks=tracks)
 
-    async def get_autoplay_track(self, last_track: Track, history: list, loop) -> Track:
+    async def get_autoplay_track(
+        self,
+        last_track: Track,
+        history: list,
+        loop,
+        recent_tracks: list | None = None,
+    ) -> Track:
         """
         YouTube'un güçlü RD Radyo algoritmasını DJ olarak kullanır,
         önerilen kaliteli şarkıyı SoundCloud üzerinden bulup çalar.
@@ -134,7 +145,7 @@ class SoundCloudProvider(BaseProvider):
         radio_url = f"https://www.youtube.com/watch?v={yt_id}&list=RD{yt_id}"
         radio_opts = {
             "extract_flat": True,
-            "playlist_items": "2-12", # İlk 10 benzer parçayı tara
+            "playlist_items": "2-20",
             "quiet": True,
             "ignoreerrors": True
         }
@@ -144,29 +155,47 @@ class SoundCloudProvider(BaseProvider):
         if not radio_data or "entries" not in radio_data:
             return None
 
-        # 3. Adım: YouTube miksindeki şarkıları sırayla dene
+        candidates = []
         for entry in radio_data["entries"]:
             if not entry:
                 continue
 
-            raw_title = entry.get("title", "")
-            cleaned_title = self.clean_title(raw_title)
-
-            # Eğer önerilen parça zaten çalan şarkının aynısı/cover'ı ise veya geçmişte çalındıysa atla
-            if self.is_similar_song(last_track["title"], cleaned_title):
+            entry_id = str(entry.get("id") or "")
+            if not entry_id:
                 continue
 
-            # 4. Adım: Temizlenmiş şarkı adını SoundCloud'da ara
+            raw_title = entry.get("title", "")
+            candidates.append(Candidate(
+                id=entry_id,
+                title=raw_title,
+                artist=extract_artist(
+                    raw_title,
+                    uploader=entry.get("channel") or entry.get("uploader"),
+                    artist=entry.get("artist") or entry.get("creator"),
+                ),
+                payload=entry,
+            ))
+
+        # 3. Adım: Filtreden geçen adayları sırayla SoundCloud'da ara
+        for candidate in self.autoplay_filter.rank(candidates, last_track, recent_tracks or []):
+            if candidate.id in history:
+                continue
+
+            cleaned_title = self.clean_title(candidate.title)
+
             try:
                 sc_track = await self.extract_track(cleaned_title, requester="SoundCloud", loop=loop)
-                
-                # Şarkı SoundCloud'da başarıyla bulunduysa ve geçmişte çalmadıysa seç!
-                if sc_track and sc_track.id not in history:
-                    # SoundCloud'daki bulunan sonucun da aynı parça olmadığından emin ol
-                    if not self.is_similar_song(last_track["title"], sc_track.title):
-                        return sc_track
+
+                if not sc_track or sc_track.id in history:
+                    continue
+
+                # SoundCloud'daki sonucun da aynı şarkı/remix olmadığından emin ol
+                if is_same_song(sc_track.title, track_title(last_track)):
+                    continue
+
+                return sc_track
             except Exception:
-                # SoundCloud'da bu remix veya şarkı yoksa sonraki entry'ye geç (Fallback)
+                # SoundCloud'da bu remix veya şarkı yoksa sonraki adaya geç
                 continue
 
         return None

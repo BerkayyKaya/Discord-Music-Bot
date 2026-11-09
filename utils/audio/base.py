@@ -31,6 +31,12 @@ class BaseProvider(ABC):
         pass
 
     @abstractmethod
-    async def get_autoplay_track(self, last_track: Track, history: list, loop) -> Track | None:
+    async def get_autoplay_track(
+        self,
+        last_track: Track,
+        history: list,
+        loop,
+        recent_tracks: list | None = None,
+    ) -> Track | None:
         """Sağlayıcıya özel bir sonraki benzer şarkıyı bulur."""
         pass

@@ -5,6 +5,7 @@ import discord
 from discord import app_commands
 from discord.ext import commands
 
+from utils.audio.autoplay_filter import extract_artist
 from utils.audio.manager import SourceManager
 from utils.audio.models import Playlist
 from utils.context import InteractionContext
@@ -39,6 +40,7 @@ class Music(commands.Cog):
         self.autoplay = {}
         self.history = {}
         self.current_song = {}
+        self.track_history = {}
 
     # region play commands
     async def play_next(self, ctx):
@@ -58,7 +60,13 @@ class Music(commands.Cog):
 
             try:
                 guild_history = self.history.get(ctx.guild.id, [])
-                new_track = await provider.get_autoplay_track(last_song, guild_history, self.bot.loop)
+                recent_tracks = self.track_history.get(ctx.guild.id, [])
+                new_track = await provider.get_autoplay_track(
+                    last_song,
+                    guild_history,
+                    self.bot.loop,
+                    recent_tracks=recent_tracks,
+                )
 
                 if new_track:
                     await self.play_music(ctx, new_track)
@@ -80,6 +88,19 @@ class Music(commands.Cog):
         thumbnail = song_data.get("thumbnail", None)
         requester = song_data.get("requester", "Bilinmeyen Kullanıcı")
         self.current_song[ctx.guild.id] = song_data
+
+        if ctx.guild.id not in self.track_history:
+            self.track_history[ctx.guild.id] = []
+
+        self.track_history[ctx.guild.id].append({
+            "id": str(song_data["id"]),
+            "title": title,
+            "artist": song_data.get("artist") or extract_artist(title),
+            "provider": song_data.get("provider", "youtube"),
+        })
+
+        if len(self.track_history[ctx.guild.id]) > 20:
+            self.track_history[ctx.guild.id].pop(0)
 
         if ctx.guild.id not in self.history:
             self.history[ctx.guild.id] = []
@@ -248,6 +269,8 @@ class Music(commands.Cog):
 
         if ctx.guild.id in self.current_song:
             del self.current_song[ctx.guild.id]
+
+        self.track_history.pop(ctx.guild.id, None)
 
         if ctx.guild.id in self.np_messages:
             try:
