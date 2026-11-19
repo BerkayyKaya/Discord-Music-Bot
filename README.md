@@ -4,7 +4,8 @@
 ![Python](https://img.shields.io/badge/Python-3.12%2B-blue)
 ![discord.py](https://img.shields.io/badge/discord.py-2.7.1-%235865F2)
 ![FFmpeg](https://img.shields.io/badge/FFmpeg-2024--08--21%2B-green)
-![yt-dlp](https://img.shields.io/badge/yt--dlp-2026.6.9-blue)
+![yt-dlp](https://img.shields.io/badge/yt--dlp-2026.10.26-blue)
+![uv](https://img.shields.io/badge/uv-package%20manager-6E56CF)
 
 </div>
 <br>
@@ -80,7 +81,7 @@ docker compose up -d --build
 
 ## Docker Kullanmadan Lokal Çalıştırma İçin
 ### 1. Gereksinimler
-Sisteminizde **Python 3.12+** ve ses işleme için **FFmpeg** kurulu olmalıdır. Ayrıca FFmpeg Pathinizin sistem değişkenlerinde olduğundan emin olunuz.
+Sisteminizde **Python 3.12+**, **[uv](https://docs.astral.sh/uv/)** ve ses işleme için **FFmpeg** kurulu olmalıdır. uv, `.python-version` dosyasındaki Python sürümünü otomatik olarak indirip yönetir. Ayrıca FFmpeg Pathinizin sistem değişkenlerinde olduğundan emin olunuz.
 
 ### 2. Projeyi Klonlayın
 ```bash
@@ -92,20 +93,20 @@ Proje dizinine geçin:
 cd Discord-Music-Bot
 ```
 
-### 3. Sanal Bir Ortam Oluşturarak Bağımlılıkları Yükleyin
+### 3. uv ile Bağımlılıkları Yükleyin
+uv kurulu değilse:
 ```bash
-python -m venv music_bot
+pip install uv
 ```
 
-Ortamı etkinleştirin:
+> `uv` komutu PATH'te görünmüyorsa komutları `py -m uv ...` şeklinde çalıştırabilirsiniz.
+
+Bağımlılıkları ve sanal ortamı oluşturun:
 ```bash
-.\music_bot\Scripts\activate
+uv sync
 ```
 
-Bağımlılıkları yükleyin:
-```bash
-pip install -r requirements.txt
-```
+> `uv sync`, proje dizininde `.venv` oluşturur ve `uv.lock` dosyasındaki sürümleri kurar. Ortamı ayrıca etkinleştirmenize gerek yoktur; komutları `uv run` ile çalıştırabilirsiniz.
 
 ### 4. Bir Bot Oluşturun
 #### [Discord Developer Portal](https://discord.com/developers/home) üzerinden yeni bir uygulama oluşturun:
@@ -121,9 +122,9 @@ discord_token = Buraya Bir Önceki Adımda Aldığınız Tokeni Yapıştırın
 ```
 
 ### 6. Botu Başlatın
-- music_bot ortamınız aktifken proje dizini içerisinde aşağıdaki komutu çalıştırın.
+- Proje dizini içerisinde aşağıdaki komutu çalıştırın.
 ```bash
-python main.py
+uv run python main.py
 ```
 
 - Bunu yaptıktan sonra çıktı olarak aşağıdaki çıktıyı aldığınızda botunuz artık hazır demektir.

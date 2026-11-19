@@ -1,4 +1,13 @@
 __pycache__/
 /.vscode/*
 .env
+/tests/
 AUTOPLAY_FILTER_HANDOFF.local.md
+
+# Python / uv
+.venv/
+*.egg-info/
+build/
+dist/
+.pytest_cache/
+.ruff_cache/

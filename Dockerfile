@@ -1,6 +1,9 @@
 # PYTHON
 FROM python:3.12-slim
 
+# UV
+COPY --from=ghcr.io/astral-sh/uv:latest /uv /uvx /bin/
+
 # FFMPEG
 RUN apt-get update && \
     apt-get install -y ffmpeg && \
@@ -10,12 +13,16 @@ RUN apt-get update && \
 # WORK DIRECTORY
 WORKDIR /app
 
+# UV SETTINGS
+ENV UV_COMPILE_BYTECODE=1 \
+    UV_LINK_MODE=copy
+
 # Required packages
-COPY requirements.txt .
-RUN pip install --no-cache-dir -r requirements.txt
+COPY pyproject.toml uv.lock ./
+RUN uv sync --frozen --no-dev
 
 # Bot codes
 COPY . .
 
 # Start commands
-CMD ["python", "main.py"]
+CMD ["uv", "run", "--no-sync", "python", "main.py"]

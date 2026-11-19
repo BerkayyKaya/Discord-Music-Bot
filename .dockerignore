@@ -1,0 +1,11 @@
+.git
+.gitignore
+.venv
+__pycache__
+*.py[cod]
+.env
+.vscode
+tests
+AUTOPLAY_FILTER_HANDOFF.local.md
+README.md
+images
